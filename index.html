@@ -4,12 +4,8 @@
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 </head>
 <body ng-controller="evidenceController">
-  <!--
-Identifier: 2715-OST-80 | type: casing | other: -1643818590
-Identifier: DNA-9813 | type: blood | other: DNA Type
-Identifier: 2715-OST-80 | type: projectile | other: -1643818590
-Identifier: DNA-9813 | type: blood | other: DNA Type
-  -->
+  Hello, this tool groups up lines with "casing" and "projectile", and removes duplicates, and adds the report number at the end of each line. I am not a designer, yes its ugly, i do not care
+  <hr>
   Report Number: <input ng-model="reportNumber"><br>
   Paste Evidence: <textarea ng-change="updateEvidence()" ng-model="evidenceInput" rows="12" cols="100"></textarea>
   <hr>
