@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html ng-app="evidenceHelper">
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+<body ng-controller="evidenceController">
+  <!--
+Identifier: 2715-OST-80 | type: casing | other: -1643818590
+Identifier: DNA-9813 | type: blood | other: DNA Type
+Identifier: 2715-OST-80 | type: projectile | other: -1643818590
+Identifier: DNA-9813 | type: blood | other: DNA Type
+  -->
+  Report Number: <input ng-model="reportNumber"><br>
+  Paste Evidence: <textarea ng-change="updateEvidence()" ng-model="evidenceInput" rows="12" cols="100"></textarea>
+  <hr>
+  <div ng-repeat="pairs in pairingsList">
+    <b>{{pairs.Identifier}} ({{pairs.other}})</b>
+    <li ng-if="pairs.casing.original">{{pairs.casing.original}} | (#{{reportNumber}})</li>
+    <li ng-if="pairs.projectile.original">{{pairs.projectile.original}} | (#{{reportNumber}})</li>
+  </div>
+  <br><b>DNA</b>
+  <div ng-repeat="evi in evidenceList">
+    <li ng-if="evi.type=='blood'">{{evi.original}} | (#{{reportNumber}})</li>
+  </div>
+</body>
+</html>
+
+
+<script>
+var app = angular.module("evidenceHelper", []); 
+app.controller("evidenceController", function($scope) {
+  
+  $scope.evidenceList = []; //
+  $scope.pairingsList = [];
+  $scope.reportNumber;
+
+  var evidence = { 
+    Identifier: "", 
+    type: "",  
+    other: "",
+    original: ""
+  };
+
+  var pairing = {
+    casing: "None",
+    projectile: "None",
+    Identifier: "",
+    json: "" //this is how im gonna determine uniqueness
+  }
+  
+  $scope.updateEvidence = function (){
+    //each time the textarea is changed the evidence list updates EVERY TIME !!!!!
+    $scope.evidenceList = []; //FROM SCRATCH
+    $scope.pairingsList = [];
+
+    let eachEvidence = $scope.evidenceInput.split("\n")
+    
+    eachEvidence.forEach((evi,index) => {
+      //clone the evidence structurally
+      let newEvidence = structuredClone(evidence);
+      //get original string from line and place it in the new evidence:
+      newEvidence.original = eachEvidence[index]
+      //split the evidence values up by |
+      let keys = evi.split(" | ")
+      keys.forEach((k,index) => {
+        let [key, value] = keys[index].split(': ');
+        newEvidence[key] = value;
+      });
+      $scope.evidenceList.push(newEvidence);
+    })
+    //remove duplicates
+    $scope.evidenceList = $scope.removeDuplicates($scope.evidenceList);
+    $scope.pairCasings();
+    $scope.pairingsList = $scope.removeDuplicates($scope.pairingsList);
+  }
+
+  $scope.removeDuplicates = function (list){
+    let evi = list.map(JSON.stringify);
+    let set = new Set(evi);
+    let uniqueList = Array.from(set).map(JSON.parse);
+ 
+    return uniqueList;
+  }
+
+  $scope.pairCasings = function (){
+    $scope.evidenceList.forEach(evi => {
+      //skip blood
+      if(evi["type"] == "casing" || evi["type"] == "projectile"){
+        //create new pairing
+        newPairing = structuredClone(pairing);
+        let pairingWhat = "casing"
+        let pairingTo = "projectile"
+        if(evi["type"] == "projectile"){
+          pairingWhat = "projectile"
+          pairingTo = "casing"
+        }
+
+        newPairing[pairingWhat] = evi
+        newPairing["Identifier"] = evi.Identifier
+        newPairing["other"] = evi.other
+        $scope.evidenceList.forEach(evi2 => {
+          if(evi2.Identifier == evi.Identifier && evi2.type != evi.type){
+            newPairing[pairingTo] = evi2;
+          }
+        });
+        newPairing.json = JSON.stringify(newPairing);
+        $scope.pairingsList.push(newPairing)
+
+      }
+    });
+  }
+});
+</script>
